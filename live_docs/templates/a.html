@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Collaborative Document Editor</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      height: 100vh; 
+      margin: 0; 
+    }
+    #editor-container { 
+      width: 80%; 
+      max-width: 800px; 
+    }
+    #editor { 
+      width: 100%; 
+      height: 400px; 
+      padding: 10px; 
+      border: 1px solid #ccc; 
+      font-size: 16px; 
+      resize: none; 
+    }
+    #status { 
+      color: green; 
+      margin-top: 5px; 
+    }
+    #file-input { 
+      margin-top: 10px; 
+    }
+    #load-button { 
+      margin-top: 10px; 
+    }
+  </style>
+</head>
+<body>
+
+<div id="editor-container">
+  <h2>Collaborative Document Editor</h2>
+  <textarea id="editor" placeholder="Start typing..."></textarea>
+  <input type="file" id="file-input" accept=".txt" />
+  <button id="load-button">Load</button> <!-- Load 버튼 -->
+  <div id="status">Connecting...</div>
+</div>
+
+<script>
+  const editor = document.getElementById('editor');
+  const statusDisplay = document.getElementById('status');
+  const fileInput = document.getElementById('file-input');
+  const loadButton = document.getElementById('load-button');
+
+  // WebSocket 연결
+  const socket = new WebSocket('ws://127.0.0.1:8000/ws');
+
+  socket.onopen = () => {
+    statusDisplay.textContent = 'Connected';
+  };
+
+  socket.onclose = () => {
+    statusDisplay.textContent = 'Disconnected';
+  };
+
+  socket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.type === 'update') {
+      editor.value = data.content; // 다른 클라이언트에서의 업데이트
+    }
+  };
+
+  editor.addEventListener('input', () => {
+    const content = editor.value;
+    socket.send(JSON.stringify({ type: 'update', content })); // 입력 시 서버로 전송
+  });
+
+  // 파일 선택 시
+  fileInput.addEventListener('change', async (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      
+      reader.onload = async (e) => {
+        const content = e.target.result;
+        editor.value = content; // 에디터에 파일 내용 덮어쓰기
+        
+        // WebSocket으로 파일 내용 전송
+        socket.send(JSON.stringify({ type: 'update', content }));
+
+        // FastAPI 백엔드에 저장 요청
+        const response = await fetch('/save_init', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ txtfile: content }), // JSON 형식으로 파일 내용 전송
+        });
+
+        if (response.ok) {
+          console.log('File content saved successfully!');
+        } else {
+          console.error('Failed to save the file content.');
+        }
+      };
+
+      reader.readAsText(file); // 파일을 텍스트로 읽기
+    }
+  });
+
+  // Load 버튼 클릭 이벤트
+  loadButton.addEventListener('click', async () => {
+    // API에서 텍스트 파일 로드
+    const response = await fetch('/load_txt');
+    if (response.ok) {
+      const data = await response.json();
+      editor.value = data.txtfile; // 에디터에 파일 내용 로드
+      // WebSocket으로 로드된 내용 전송 (원하는 경우)
+      socket.send(JSON.stringify({ type: 'update', content: editor.value }));
+    } else {
+      console.error('Failed to load the text file.');
+    }
+  });
+</script>
+
+</body>
+</html>
