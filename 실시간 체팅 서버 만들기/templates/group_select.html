@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>채팅방 선택</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            display: flex;
+            height: 100vh;
+            flex-direction: row;
+        }
+        .header {
+            background-color: #007aff;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            width: 100%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        .create-room-button {
+            background-color: #ffffff;
+            color: #007aff;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 15px;
+        }
+        .main-content {
+            display: flex;
+            flex: 1;
+            flex-direction: row;
+        }
+        .chat-list {
+            width: 360px;
+            background-color: #ffffff;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            border-right: 1px solid #e0e0e0;
+        }
+        .chat-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .chat-item:hover {
+            background-color: #f0f0f0;
+        }
+        .profile-pic {
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            margin-right: 15px;
+        }
+        .chat-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-title {
+            font-weight: bold;
+            margin: 0;
+        }
+        .last-message {
+            color: #888888;
+            margin: 0;
+        }
+        .chat-detail {
+            flex: 1;
+            padding: 20px;
+            background-color: #e5e5e5;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .chat-header {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 15px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .chat-messages {
+            flex: 1;
+            width: 100%;
+            max-width: 600px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            background-color: #ffffff;
+            padding: 10px;
+        }
+        .message-input {
+            display: flex;
+            width: 100%;
+            max-width: 600px;
+            border-top: 1px solid #e0e0e0;
+            padding: 10px;
+            background-color: #ffffff;
+            align-items: center;
+            box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .message {
+            margin-bottom: 10px;
+        }
+        .message.sent .message-text {
+            background-color: #daf8cb;
+            padding: 10px;
+            border-radius: 10px;
+            text-align: right;
+            float: right;
+        }
+        .message.received .message-text {
+            background-color: #f1f0f0;
+            padding: 10px;
+            border-radius: 10px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <a class="create-room-button" id="open-dialog" href="group_create">채팅방 만들기</a>
+        </header>
+        <main class="main-content">
+            <aside class="chat-list" id="chat-list">
+                <!-- 채팅방 목록이 여기에 동적으로 추가됩니다. -->
+            </aside>
+            <div class="chat-detail" id="chat-detail">
+                <!-- 채팅방 세부 내용이 여기에 표시됩니다. -->
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", async function() {
+            try {
+                // 서버에서 채팅방 목록 가져오기
+                const response = await fetch('http://127.0.0.1:8000/get_group');
+                const chatRooms = await response.json();
+
+                // 채팅방 목록을 DOM에 추가하기
+                const chatList = document.getElementById('chat-list');
+                chatList.innerHTML = '';  // 기존 항목 지우기
+
+                chatRooms.forEach(room => {
+                    const chatItem = document.createElement('div');
+                    chatItem.className = 'chat-item';
+                    chatItem.setAttribute('data-room', room.room_id);
+
+                    // 각 room의 이름을 chat-title에 넣기
+                    chatItem.innerHTML = `
+                        <img src="https://via.placeholder.com/50" alt="프로필" class="profile-pic">
+                        <div class="chat-info">
+                            <a class="chat-title" >${room}</a>
+                        </div>
+                    `;
+                    chatItem.addEventListener('click', function() {
+                    window.location.href = `/a?room_id=${room}`;
+                    });
+                    // 채팅방 클릭 시 세부 정보를 표시합니다.
+                    chatItem.addEventListener('click', async function() {
+                        const chatDetail = document.getElementById('chat-detail');
+                        // 필요한 로직 추가
+                    });
+
+                    chatList.appendChild(chatItem);
+                });
+            } catch (error) {
+                console.error('Error fetching chat rooms:', error);
+            }
+        });
+    </script>
+</body>
+</html>

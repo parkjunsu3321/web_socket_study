@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e5e5e5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background-color: #007bff;
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px 8px 0 0;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .messages {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+            border-top: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
+        }
+        .message {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: flex-end;
+        }
+        .message.me {
+            justify-content: flex-end;
+        }
+        .message.other {
+            justify-content: flex-start;
+        }
+        .message .bubble {
+            padding: 10px;
+            border-radius: 15px;
+            max-width: 60%;
+            line-height: 1.4;
+            font-size: 14px;
+            word-wrap: break-word;
+        }
+        .message.me .bubble {
+            background-color: #007bff;
+            color: #fff;
+        }
+        .message.other .bubble {
+            background-color: #fff;
+            border: 1px solid #ddd;
+        }
+        .input-container {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #ddd;
+            background-color: #fff;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            padding: 10px 20px;
+            margin-left: 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .message-time {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header" id="chatHeader">Chat Room</div>
+        <div class="messages" id="messages"></div>
+        <div class="input-container">
+            <input type="text" id="messageInput" placeholder="Enter message">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        // URL에서 room_id 값을 가져오기
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomId = urlParams.get('room_id'); // room_id로 사용
+
+        // Update the header with roomId
+        document.getElementById('chatHeader').textContent = `Chat Room - ${roomId}`;
+
+        // WebSocket 연결 설정
+        const websocket = new WebSocket(`ws://127.0.0.1:8000/ws/${roomId}`);
+
+        websocket.onopen = function(event) {
+            console.log("WebSocket connection opened.");
+        };
+
+        websocket.onmessage = function(event) {
+            const messagesList = document.getElementById("messages");
+            const newMessage = document.createElement("div");
+            newMessage.classList.add("message", "other");
+            newMessage.innerHTML = `
+                <div class="bubble">${event.data}</div>
+                <div class="message-time">${new Date().toLocaleTimeString()}</div>
+            `;
+            messagesList.appendChild(newMessage);
+            messagesList.scrollTop = messagesList.scrollHeight;
+        };
+
+        websocket.onclose = function(event) {
+            console.log("WebSocket connection closed.");
+        };
+
+        function sendMessage() {
+            const input = document.getElementById("messageInput");
+            const message = input.value;
+            websocket.send(message);
+            const messagesList = document.getElementById("messages");
+            const newMessage = document.createElement("div");
+            newMessage.classList.add("message", "me");
+            newMessage.innerHTML = `
+                <div class="bubble">${message}</div>
+                <div class="message-time">${new Date().toLocaleTimeString()}</div>
+            `;
+            messagesList.appendChild(newMessage);
+            messagesList.scrollTop = messagesList.scrollHeight;
+            input.value = '';
+        }
+    </script>
+</body>
+</html>
