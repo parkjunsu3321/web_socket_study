@@ -19,7 +19,7 @@
 
 > 그룹 체팅 같은 경우에는 python의 dict 형태를 사용하여서, 서버에서 발급해주는 임의 코드를 이용하여서 메시지를 참가 그룹원들에게 한정적으로 전송하도록 구현을 할 예정이다.
 > 
-![image](images/socket_struct.png.png)
+![image](images/socket_struct.png)
 ---
 
 # 3) 실제 구현
